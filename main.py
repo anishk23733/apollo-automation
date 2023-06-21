@@ -178,7 +178,7 @@ def get_and_add_people(company_url, emailer_campaign_id, send_email_from_email_a
         )
         added += len(res['contacts'])
     
-    return True
+    return added
 
 def get_sequence_id():
     res = handle_request(
@@ -262,14 +262,14 @@ def create_contact(contact):
     res = res.json()
     return res['contact']['id']
 
-send_email_from_email_account_id = get_email_account_id()
-emailer_campaign_id = get_sequence_id()
+if __name__ == '__main__':
+    send_email_from_email_account_id = get_email_account_id()
+    emailer_campaign_id = get_sequence_id()
+    
+    successfully_added = get_and_add_people(
+        'affectiva.com',
+        emailer_campaign_id,
+        send_email_from_email_account_id
+    )
 
-res = get_and_add_people(
-    'salesforce.com',
-    emailer_campaign_id,
-    send_email_from_email_account_id
-)
-
-successfully_added = len(res['contacts'])
-print(f'Successfully added {successfully_added}')
+    print(f'Successfully added {successfully_added}')
