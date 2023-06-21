@@ -84,7 +84,7 @@ class Apollo():
         return ids[0]
 
     def get_and_add_people(self, company_url):
-        batch_size = 50
+        batch_size = 10
         added = 0
 
         roles = ['Director', 'Manager', 'VP', 'CEO', 'Founder']
