@@ -84,7 +84,7 @@ class Apollo():
         return ids[0]
 
     def get_and_add_people(self, company_url):
-        batch_size = 10
+        batch_size = 50
         added = 0
 
         roles = ['Director', 'Manager', 'VP', 'CEO', 'Founder']
@@ -100,6 +100,7 @@ class Apollo():
         )
 
         res = res.json()
+        total_pages = res['pagination']['total_pages']
 
         people_ids = []
         if os.path.exists('cache.json'):
@@ -124,9 +125,7 @@ class Apollo():
                 people_ids = []
                 with open('cache.json', 'w') as f:
                     json.dump(people_ids, f)
-
-        total_pages = res['pagination']['total_pages']
-        
+                
         print(f'[LOG] Total pages of contacts is {total_pages}.')
 
         for page in tqdm.tqdm(range(2, total_pages + 1)):
