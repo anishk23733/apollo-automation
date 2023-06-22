@@ -1,9 +1,12 @@
 # Apollo Automation
 
-Place your `API_KEY` in `main.py` and replace `company_url` with the URL of the company you're sourcing. Then, running `main.py` will populate your already created Sequence with emails from that company for relevant roles.
+Instructions for running:
 
-
-TODOs (feel free to contribute):
-- API key as environment variable.
-- Company URL as command line argument.
-- Multiple company URLs through some sort of spreadsheet.
+1. Add your API_KEY as an environment variable.
+```
+export API_KEY='xxxxxxxxxxx'
+```
+2. Run tool.
+```
+python3 main.py <company_url>
+```
