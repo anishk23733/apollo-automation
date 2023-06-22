@@ -117,10 +117,10 @@ class Apollo():
                 json.dump(people_ids, f)
             
             if len(people_ids) == batch_size:
-                res = self.add_contacts_to_sequence(
+                res2 = self.add_contacts_to_sequence(
                     people_ids
                 )
-                added += len(res['contacts'])
+                added += len(res2['contacts'])
 
                 people_ids = []
                 with open('cache.json', 'w') as f:
