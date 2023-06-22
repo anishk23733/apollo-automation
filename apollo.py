@@ -70,7 +70,7 @@ class Apollo():
         else:
             return res
             
-        return self.handle_request(url, json_params)
+        return self.handle_request(url, data)
 
     def get_email_account_id(self):
         res = self.handle_request('https://api.apollo.io/v1/email_accounts', {'api_key': self.api_key}, type_='get')
@@ -110,26 +110,26 @@ class Apollo():
         for person in res['people']:
             new_id = self.create_contact(person)
             if not new_id:
+                print('Failed to make', person)
                 continue
             people_ids.append(new_id)
 
             with open('cache.json', 'w') as f:
                 json.dump(people_ids, f)
             
-            if len(people_ids) == batch_size:
-                res = self.add_contacts_to_sequence(
+            if len(people_ids) >= batch_size:
+                res2 = self.add_contacts_to_sequence(
                     people_ids
                 )
-                added += len(res['contacts'])
+                added += len(res2['contacts'])
 
                 people_ids = []
                 with open('cache.json', 'w') as f:
                     json.dump(people_ids, f)
-                
         print(f'[LOG] Total pages of contacts is {total_pages}.')
 
         for page in tqdm.tqdm(range(2, total_pages + 1)):
-            res = self.handle_request(
+            res2 = self.handle_request(
                 'https://api.apollo.io/v1/mixed_people/search',
                 {
                     'person_titles': roles,
@@ -140,8 +140,8 @@ class Apollo():
                 type_='post'
             )
 
-            res = res.json()
-            for person in res['people']:
+            res2 = res2.json()
+            for person in res2['people']:
                 new_id = self.create_contact(person)
                 if not new_id:
                     continue
@@ -150,21 +150,21 @@ class Apollo():
                 with open('cache.json', 'w') as f:
                     json.dump(people_ids, f)
                 
-                if len(people_ids) == batch_size:
-                    res = self.add_contacts_to_sequence(
+                if len(people_ids) >= batch_size:
+                    res3 = self.add_contacts_to_sequence(
                         people_ids,
                     )
-                    added += len(res['contacts'])
+                    added += len(res3['contacts'])
 
                     people_ids = []
                     with open('cache.json', 'w') as f:
                         json.dump(people_ids, f)
         
         if len(people_ids) > 0:
-            res = self.add_contacts_to_sequence(
+            res2 = self.add_contacts_to_sequence(
                 people_ids,
             )
-            added += len(res['contacts'])
+            added += len(res2['contacts'])
         
         return added
 
@@ -218,21 +218,20 @@ class Apollo():
             return False
 
     def create_contact(self, contact):
-        if not contact.get('organization') or not contact['organization'].get('website_url') or not contact.get('email') or not contact.get('first_name') or not contact.get('last_name') or not contact.get('title'):
+        if not contact.get('email'):
             return None
         
         res = self.handle_request(
             'https://api.apollo.io/v1/contacts',
             {
                 'api_key': self.api_key,
-                'first_name': contact['first_name'],
-                'last_name': contact['last_name'],
-                'organization_name': contact['organization']['name'],
-                'title': contact['title'],
+                # 'first_name': contact['first_name'],
+                # 'last_name': contact['last_name'],
+                # 'organization_name': contact['organization']['name'],
+                # 'title': contact['title'],
                 'email': contact['email'],
-                'website_url': contact['organization']['website_url'],
-                'account_id': contact['id'],
-
+                # 'website_url': contact['organization']['website_url'],
+                # 'account_id': contact['id'],
             },
             type_='post'
         )

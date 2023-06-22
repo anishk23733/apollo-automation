@@ -1,11 +1,19 @@
 from apollo import Apollo
-
-API_KEY = ''
+import os
+import argparse
 
 if __name__ == '__main__':
-    apollo_client = Apollo(API_KEY)
-    company_url = 'tome.app'
+    parser = argparse.ArgumentParser(description='Add people from a company URL.')
+    parser.add_argument('company_url', nargs='+', default=[], help='The company URLs to fetch people from.')
 
-    successfully_added = apollo_client.get_and_add_people(company_url)
+    args = parser.parse_args()
 
-    print(f'[LOG] Successfully added {successfully_added} contacts.')
+    api_key = os.environ.get('API_KEY')
+    company_urls = args.company_url
+
+    apollo_client = Apollo(api_key)
+    
+    for url in company_urls:
+        successfully_added = apollo_client.get_and_add_people(url)
+
+        print(f'[LOG] Successfully added {successfully_added} contacts for {url}.')
