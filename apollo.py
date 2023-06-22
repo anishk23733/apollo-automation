@@ -70,7 +70,7 @@ class Apollo():
         else:
             return res
             
-        return self.handle_request(url, json_params)
+        return self.handle_request(url, data)
 
     def get_email_account_id(self):
         res = self.handle_request('https://api.apollo.io/v1/email_accounts', {'api_key': self.api_key}, type_='get')
