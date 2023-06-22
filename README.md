@@ -8,5 +8,5 @@ export API_KEY='xxxxxxxxxxx'
 ```
 2. Run tool.
 ```
-python3 main.py <company_url>
+python3 main.py <company1_url> <company2_url> <company3_url>
 ```
