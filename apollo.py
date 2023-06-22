@@ -84,10 +84,9 @@ class Apollo():
         return ids[0]
 
     def get_and_add_people(self, company_url):
-        batch_size = 50
         added = 0
 
-        roles = ['Director', 'Manager', 'VP', 'CEO', 'Founder']
+        roles = ['Director', 'Manager', 'VP', 'CEO', 'Founder', 'CTO', 'Chief Executive Officer', 'Chief Technology Officer']
         res = self.handle_request(
             'https://api.apollo.io/v1/mixed_people/search',
             {
@@ -102,69 +101,51 @@ class Apollo():
         res = res.json()
         total_pages = res['pagination']['total_pages']
 
-        people_ids = []
-        if os.path.exists('cache.json'):
-            with open('cache.json', 'r') as f:
-                people_ids = json.load(f)
+        page_people_ids = []
 
         for person in res['people']:
             new_id = self.create_contact(person)
-            if not new_id:
-                print('Failed to make', person)
-                continue
-            people_ids.append(new_id)
+            if new_id:
+                page_people_ids.append(new_id)
+        
+        net_new = 0
+        if page_people_ids:
+            res2 = self.add_contacts_to_sequence(page_people_ids)
+            net_new = len(res2['contacts'])
+        
+        added += net_new
 
-            with open('cache.json', 'w') as f:
-                json.dump(people_ids, f)
-            
-            if len(people_ids) >= batch_size:
-                res2 = self.add_contacts_to_sequence(
-                    people_ids
-                )
-                added += len(res2['contacts'])
-
-                people_ids = []
-                with open('cache.json', 'w') as f:
-                    json.dump(people_ids, f)
         print(f'[LOG] Total pages of contacts is {total_pages}.')
 
-        for page in tqdm.tqdm(range(2, total_pages + 1)):
-            res2 = self.handle_request(
+        for page in range(total_pages, 2, -1):
+            print(f"[LOG] Inspecting page {page}.")
+            res3 = self.handle_request(
                 'https://api.apollo.io/v1/mixed_people/search',
                 {
                     'person_titles': roles,
                     'q_organization_domains': company_url,
-                    'page': 1,
+                    'page': page,
                     'api_key': self.api_key
                 }, 
                 type_='post'
             )
 
-            res2 = res2.json()
-            for person in res2['people']:
-                new_id = self.create_contact(person)
-                if not new_id:
-                    continue
-                people_ids.append(new_id)
-                
-                with open('cache.json', 'w') as f:
-                    json.dump(people_ids, f)
-                
-                if len(people_ids) >= batch_size:
-                    res3 = self.add_contacts_to_sequence(
-                        people_ids,
-                    )
-                    added += len(res3['contacts'])
+            res3 = res3.json()
 
-                    people_ids = []
-                    with open('cache.json', 'w') as f:
-                        json.dump(people_ids, f)
-        
-        if len(people_ids) > 0:
-            res2 = self.add_contacts_to_sequence(
-                people_ids,
-            )
-            added += len(res2['contacts'])
+            page_people_ids = []
+
+            for person in res3['people']:
+                new_id = self.create_contact(person)
+                if new_id:
+                    page_people_ids.append(new_id)
+            
+            net_new = 0
+            if page_people_ids:
+                res4 = self.add_contacts_to_sequence(page_people_ids)
+                net_new = len(res4['contacts'])
+            
+            added += net_new
+            print(f"[LOG] {net_new} new contacts on page {page}.")
         
         return added
 
@@ -219,13 +200,19 @@ class Apollo():
 
     def create_contact(self, contact):
         if not contact.get('email'):
-            return None
+            return
         
         res = self.handle_request(
             'https://api.apollo.io/v1/contacts',
             {
                 'api_key': self.api_key,
-                'email': contact['email'],
+                'first_name': contact.get('first_name'),
+                'last_name': contact.get('last_name'),
+                'organization_name': contact.get('organization', dict()).get('name'),
+                'title': contact.get('title'),
+                'email': contact.get('email'),
+                'website_url': contact.get('organization', dict()).get('website_url'),
+                'account_id': contact.get('id'),
             },
             type_='post'
         )
