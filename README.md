@@ -1,12 +1,18 @@
 # Apollo Automation
 
-Instructions for running:
+A tool for populating an Apollo sequence with contacts of a given company.
 
-1. Add your API_KEY as an environment variable.
+## Instructions
+
+1. Install required dependences
 ```
-export API_KEY='xxxxxxxxxxx'
+pip3 install -r requirements.txt
 ```
-2. Run tool.
+2. Add your API_KEY as an environment variable.
+```
+export API_KEY='XXXX'
+```
+3. Run tool.
 ```
 python3 main.py <company1_url> <company2_url> <company3_url>
 ```
