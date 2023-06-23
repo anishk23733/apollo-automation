@@ -18,6 +18,7 @@ class Apollo():
 
         self.send_email_from_email_account_id = self.get_email_account_id()
         self.emailer_campaign_id = self.get_sequence_id()
+        self.roles = roles = ['Director', 'Manager', 'VP', 'CEO', 'Founder', 'CTO', 'Chief Executive Officer', 'Chief Technology Officer']
 
     def handle_request(self, url, data, type_='post'):
         if type_ == 'post':
@@ -66,6 +67,7 @@ class Apollo():
             time.sleep(60)
         elif res.status_code != 200:
             print('[LOG] Unknown error, sleeping for 60 seconds. Did you provide a correct key?')
+            print(res.json())
             time.sleep(60)
         else:
             return res
@@ -86,13 +88,38 @@ class Apollo():
     def get_and_add_people(self, company_url):
         added = 0
 
-        roles = ['Director', 'Manager', 'VP', 'CEO', 'Founder', 'CTO', 'Chief Executive Officer', 'Chief Technology Officer']
+        print(f"[LOG] Starting.")
+        net_new, total_pages = self.sequence_contacts_from_page(1, company_url)
+        
+        added += net_new
+
+        # print(f"[LOG] {net_new} new contacts on page 1.")
+        # print(f'[LOG] Total pages remaining is {total_pages}.')
+
+        pbar = tqdm.tqdm(range(total_pages, 1, -1))
+
+        people_ids = []
+        for page in pbar:
+            people_ids += self.get_contacts_from_page(page, company_url)
+
+        net_new = 0
+        if people_ids:
+            res2 = self.add_contacts_to_sequence(people_ids)
+            net_new = len(res2['contacts'])  
+        added += net_new
+
+        net_new, total_pages = self.sequence_contacts_from_page(1, company_url)
+        
+        added += net_new
+        return added
+    
+    def sequence_contacts_from_page(self, page, company_url):
         res = self.handle_request(
             'https://api.apollo.io/v1/mixed_people/search',
             {
-                'person_titles': roles,
+                'person_titles': self.roles,
                 'q_organization_domains': company_url,
-                'page': 1,
+                'page': page,
                 'api_key': self.api_key
             },
             type_='post'
@@ -113,41 +140,31 @@ class Apollo():
             res2 = self.add_contacts_to_sequence(page_people_ids)
             net_new = len(res2['contacts'])
         
-        added += net_new
+        return net_new, total_pages
 
-        print(f'[LOG] Total pages of contacts is {total_pages}.')
+    def get_contacts_from_page(self, page, company_url):
+        res = self.handle_request(
+            'https://api.apollo.io/v1/mixed_people/search',
+            {
+                'person_titles': self.roles,
+                'q_organization_domains': company_url,
+                'page': page,
+                'api_key': self.api_key
+            },
+            type_='post'
+        )
 
-        for page in range(total_pages, 2, -1):
-            print(f"[LOG] Inspecting page {page}.")
-            res3 = self.handle_request(
-                'https://api.apollo.io/v1/mixed_people/search',
-                {
-                    'person_titles': roles,
-                    'q_organization_domains': company_url,
-                    'page': page,
-                    'api_key': self.api_key
-                }, 
-                type_='post'
-            )
+        res = res.json()
+        total_pages = res['pagination']['total_pages']
 
-            res3 = res3.json()
+        page_people_ids = []
 
-            page_people_ids = []
-
-            for person in res3['people']:
-                new_id = self.create_contact(person)
-                if new_id:
-                    page_people_ids.append(new_id)
-            
-            net_new = 0
-            if page_people_ids:
-                res4 = self.add_contacts_to_sequence(page_people_ids)
-                net_new = len(res4['contacts'])
-            
-            added += net_new
-            print(f"[LOG] {net_new} new contacts on page {page}.")
+        for person in res['people']:
+            new_id = self.create_contact(person)
+            if new_id:
+                page_people_ids.append(new_id)
         
-        return added
+        return page_people_ids
 
     def get_sequence_id(self):
         res = self.handle_request(
