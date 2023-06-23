@@ -96,7 +96,7 @@ class Apollo():
         # print(f"[LOG] {net_new} new contacts on page 1.")
         # print(f'[LOG] Total pages remaining is {total_pages}.')
 
-        pbar = tqdm.tqdm(range(total_pages, 1, -1))
+        pbar = tqdm.tqdm(range(total_pages, 0, -1))
 
         people_ids = []
         for page in pbar:
@@ -107,10 +107,7 @@ class Apollo():
             res2 = self.add_contacts_to_sequence(people_ids)
             net_new = len(res2['contacts'])  
         added += net_new
-
-        net_new, total_pages = self.sequence_contacts_from_page(1, company_url)
         
-        added += net_new
         return added
     
     def sequence_contacts_from_page(self, page, company_url):
